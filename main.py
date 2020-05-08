@@ -23,6 +23,7 @@ def set_parameters():
     parameters["m_prob"] = 0.1
     parameters["epsilon"] = 0.1
     parameters["generations"] = 1
+    parameters["n_elites"] = 2
 
     return parameters
 
@@ -56,6 +57,11 @@ def main():
             for tstep in range(param["t_steps"]):
                 for ag_id in range(param["n_agents"]):
                     agents["NN(0)".format(ag_id)].run_neural_network(tstep, state_vec)
+
+            # Evaluate Fitness
+
+        for ag_id in range(param["n_agents"]):
+            agents["CCEA(0)".format(ag_id)].down_select()
 
 
 main()

@@ -11,6 +11,7 @@ class Ccea:
         self.eps = parameters["epsilon"]
         self.fitness = np.zeros(self.pop_size)
         self.team_selection = np.ones(self.pop_size) * (-1)
+        self.n_elites = parameters["n_elites"]  # Number of elites selected from each gen
 
         # Numbers of weights for GRU-MB
         self.n_layer1_w = (parameters["mem_block_size"]+parameters["n_inputs"]+1)*parameters["n_hnodes"]
@@ -74,12 +75,49 @@ class Ccea:
         :return:
         """
 
-        for pol_id in range(self.offspring_psize):
-            for w in range(self.policy_size):
+        starting_pol = int(self.pop_size/2)
+        while starting_pol < self.pop_size:
+            # Layer 1 Mutation
+            for w in range(self.n_layer1_w):
                 rnum = random.uniform(0, 1)
                 if rnum <= self.mut_chance:
-                    mutation = (np.random.normal(0, self.mut_rate) * self.offspring_pop[pol_id, w])
-                    self.offspring_pop[pol_id, w] += mutation
+                    weight = self.population["pop(0)".format(starting_pol)]["layer1_weights"][w]
+                    mutation = np.random.normal(0, self.mut_rate) * weight
+                    self.population["pop(0)".format(starting_pol)]["layer1_weights"][w] += mutation
+
+            # Layer 2 Mutation
+            for w in range(self.n_layer2_w):
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["layer2_weights"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["layer2_weights"][w] += mutation
+
+            # Input Gate Mutation
+            for w in range(self.n_igate_w):
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["igate_weights"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["igate_weights"][w] += mutation
+
+            # Read Gate Mutation
+            for w in range(self.n_rgate_w):
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["rgate_weights"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["rgate_weights"][w] += mutation
+
+            # Write Gate Mutation
+            for w in range(self.n_wgate_w):
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["wgate_weights"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["wgate_weights"][w] += mutation
+
+            starting_pol += 1
 
     def epsilon_greedy_select(self):  # Choose K solutions
         """
@@ -87,42 +125,29 @@ class Ccea:
         :return: None
         """
 
-        policy_id = 0
-        while policy_id < self.parent_psize:
-            rnum = random.uniform(0, 1)
-            if rnum > self.eps:  # Choose best policy
-                pol_index = np.argmax(self.fitness)
-                self.parent_pop[policy_id] = self.pops[pol_index].copy()
+        new_population = {}
+        for pol_id in range(self.pop_size):
+            if pol_id < self.n_elites:
+                max_index = np.argmax(self.fitness)
+                new_population["pop(0)".format(pol_id)] = self.population["pop(0)".format(max_index)]
             else:
-                parent = random.randint(1, (self.total_pop_size - 1))  # Choose a random parent
-                self.parent_pop[policy_id] = self.pops[parent].copy()
-            policy_id += 1
+                rnum = random.uniform(0, 1)
+                if rnum > self.eps:
+                    max_index = np.argmax(self.fitness)
+                    new_population["pop(0)".format(pol_id)] = self.population["pop(0)".format(max_index)]
+                else:
+                    parent = random.randint(1, (self.pop_size-1))
+                    new_population["pop(0)".format(pol_id)] = self.population["pop(0)".format(parent)]
+
+        self.population = new_population
 
     def down_select(self):  # Create a new offspring population using parents from top 50% of policies
         """
         Select parents create offspring population, and perform mutation operations
         :return: None
         """
-        self.rank_individuals()
         self.epsilon_greedy_select()  # Select K successors using epsilon greedy
-        self.offspring_pop = self.parent_pop.copy()
         self.weight_mutate()  # Mutate successors
-        self.combine_pops()
-
-    def rank_individuals(self):
-        """
-        Order individuals in the population based on their fitness scores
-        :return: None
-        """
-
-        for pol_id_a in range(self.pop_size - 1):
-            pol_id_b = pol_id_a + 1
-            while pol_id_b < (self.pop_size):
-                if pol_id_a != pol_id_b:
-                    if self.fitness[pol_id_a] < self.fitness[pol_id_b]:
-                        self.fitness[pol_id_a], self.fitness[pol_id_b] = self.fitness[pol_id_b], self.fitness[pol_id_a]
-                        self.pops[pol_id_a], self.pops[pol_id_b] = self.pops[pol_id_b], self.pops[pol_id_a]
-                pol_id_b += 1
 
     def reset_fitness(self):
         self.fitness = np.zeros(self.pop_size)
