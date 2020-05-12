@@ -1,6 +1,7 @@
 import numpy as np
 import random
 
+
 class Ccea:
 
     def __init__(self, parameters):
@@ -14,11 +15,11 @@ class Ccea:
         self.n_elites = parameters["n_elites"]  # Number of elites selected from each gen
 
         # Numbers of weights for GRU-MB
-        self.n_layer1_w = (parameters["mem_block_size"]+parameters["n_inputs"]+1)*parameters["n_hnodes"]
+        self.n_layer1_w = (parameters["n_outputs"]+parameters["n_inputs"]+1)*parameters["n_hnodes"]
         self.n_layer2_w = (parameters["n_hnodes"]+1)*parameters["n_outputs"]
         self.n_igate_w = (parameters["n_inputs"]+1)*parameters["n_inputs"]
-        self.n_rgate_w = (parameters["mem_block_size"]+1)*parameters["mem_block_size"]
-        self.n_wgate_w = (parameters["mem_block_size"]+1)*parameters["mem_block_size"]
+        self.n_rgate_w = (parameters["mem_block_size"]+1)*parameters["n_outputs"]
+        self.n_wgate_w = (parameters["n_outputs"]+1)*parameters["mem_block_size"]
 
         policy = {}
         for pop_id in range(self.pop_size):
@@ -75,7 +76,7 @@ class Ccea:
         :return:
         """
 
-        starting_pol = int(self.pop_size/2)
+        starting_pol = int(self.n_elites)
         while starting_pol < self.pop_size:
             # Layer 1 Mutation
             for w in range(self.n_layer1_w):
@@ -141,12 +142,38 @@ class Ccea:
 
         self.population = new_population
 
+    def fitness_prop_selection(self):
+        summed_fitness = np.sum(self.fitness)
+        fit_brackets = np.zeros(self.pop_size)
+
+        for pol_id in range(self.pop_size):
+            if pol_id == 0:
+                fit_brackets[pol_id] = self.fitness[pol_id]/summed_fitness
+            else:
+                fit_brackets[pol_id] = fit_brackets[pol_id-1] + self.fitness[pol_id]/summed_fitness
+
+        new_population = {}
+        for pol_id in range(self.pop_size):
+            if pol_id < self.n_elites:
+                max_index = np.argmax(self.fitness)
+                new_population["pop(0)".format(pol_id)] = self.population["pop(0)".format(max_index)]
+            else:
+                rnum = random.uniform(0, 1)
+                for p_id in range(self.pop_size):
+                    if p_id == 0 and rnum < fit_brackets[0]:
+                        new_population["pop(0)".format(pol_id)] = self.population["pop(0)".format(0)]
+                    elif fit_brackets[p_id-1] <= rnum < fit_brackets[p_id]:
+                        new_population["pop(0)".format(pol_id)] = self.population["pop(0)".format(p_id)]
+
+        self.population = new_population
+
     def down_select(self):  # Create a new offspring population using parents from top 50% of policies
         """
         Select parents create offspring population, and perform mutation operations
         :return: None
         """
-        self.epsilon_greedy_select()  # Select K successors using epsilon greedy
+        # self.epsilon_greedy_select()  # Select K successors using epsilon greedy
+        self.fitness_prop_selection()  # Select k successors using fit prop selection
         self.weight_mutate()  # Mutate successors
 
     def reset_fitness(self):
