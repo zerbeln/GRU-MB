@@ -32,10 +32,6 @@ class sequenceClassifier:
                     counter += 1
                 bit += 1
 
-            n_extras = random.randint(0, 10)
-            for i in range(n_extras):
-                seq.append(0)
-
             if self.training_set_answers[s, 0] > self.training_set_answers[s, 1]:
                 self.training_set_answers[s, 2] = -1
             else:

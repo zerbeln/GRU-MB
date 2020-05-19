@@ -60,7 +60,7 @@ def main():
                     for num in range(seq_len):
                         state_vec[0] = sc.training_set["set(0)".format(seq)][num]
                         nn.run_neural_network(state_vec, ag.mem_block)
-                        ag.update_memory(nn.wgate_outputs)
+                        ag.update_memory(nn.block_output, nn.wgate_outputs)
 
                     if nn.out_layer[0] < 0.5 and sc.training_set_answers[seq, 2] == -1:
                         fitness_score += 1

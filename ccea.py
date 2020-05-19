@@ -14,20 +14,39 @@ class Ccea:
         self.team_selection = np.ones(self.pop_size) * (-1)
         self.n_elites = parameters["n_elites"]  # Number of elites selected from each gen
 
-        # Numbers of weights for GRU-MB
-        self.n_layer1_w = (parameters["n_outputs"]+parameters["n_inputs"]+1)*parameters["n_hnodes"]
-        self.n_layer2_w = (parameters["n_hnodes"]+1)*parameters["n_outputs"]
-        self.n_igate_w = (parameters["n_inputs"]+1)*parameters["n_inputs"]
-        self.n_rgate_w = (parameters["mem_block_size"]+1)*parameters["n_outputs"]
-        self.n_wgate_w = (parameters["n_outputs"]+1)*parameters["mem_block_size"]
+        # Network parameters
+        self.n_inputs = parameters["n_inputs"]
+        self.n_hnodes = parameters["n_hnodes"]
+        self.n_outputs = parameters["n_outputs"]
+        self.mem_block_size = parameters["mem_block_size"]
 
         policy = {}
         for pop_id in range(self.pop_size):
-            policy["layer1_weights"] = np.random.rand(self.n_layer1_w)
-            policy["layer2_weights"] = np.random.rand(self.n_layer2_w)
-            policy["igate_weights"] = np.random.rand(self.n_igate_w)
-            policy["rgate_weights"] = np.random.rand(self.n_rgate_w)
-            policy["wgate_weights"] = np.random.rand(self.n_wgate_w)
+            policy["b_out"] = np.random.rand(self.n_outputs)
+            policy["p_out"] = np.random.rand(self.mem_block_size)
+
+            # Input Gate
+            policy["k_igate"] = np.random.rand(self.mem_block_size)
+            policy["r_igate"] = np.random.rand(self.mem_block_size)
+            policy["n_igate"] = np.random.rand(self.mem_block_size**2)
+            policy["b_igate"] = np.random.rand(self.mem_block_size)
+
+            # Block Input
+            policy["k_block"] = np.random.rand(self.mem_block_size)
+            policy["n_block"] = np.random.rand(self.mem_block_size**2)
+            policy["b_block"] = np.random.rand(self.mem_block_size)
+
+            # Read Gate
+            policy["k_rgate"] = np.random.rand(self.mem_block_size)
+            policy["r_rgate"] = np.random.rand(self.mem_block_size)
+            policy["n_rgate"] = np.random.rand(self.mem_block_size**2)
+            policy["b_rgate"] = np.random.rand(self.mem_block_size)
+
+            # Write Gate
+            policy["k_wgate"] = np.random.rand(self.mem_block_size)
+            policy["r_wgate"] = np.random.rand(self.mem_block_size)
+            policy["n_wgate"] = np.random.rand(self.mem_block_size**2)
+            policy["b_wgate"] = np.random.rand(self.mem_block_size)
 
             self.population["pop(0)".format(pop_id)] = policy
 
@@ -43,11 +62,31 @@ class Ccea:
 
         policy = {}
         for pop_id in range(self.pop_size):
-            policy["layer1_weights"] = np.random.rand(self.n_layer1_w)
-            policy["layer2_weights"] = np.random.rand(self.n_layer2_w)
-            policy["igate_weights"] = np.random.rand(self.n_igate_w)
-            policy["rgate_weights"] = np.random.rand(self.n_rgate_w)
-            policy["wgate_weights"] = np.random.rand(self.n_wgate_w)
+            policy["b_out"] = np.random.rand(self.n_outputs)
+            policy["p_out"] = np.random.rand(self.mem_block_size)
+
+            # Input Gate
+            policy["k_igate"] = np.random.rand(self.mem_block_size)
+            policy["r_igate"] = np.random.rand(self.mem_block_size)
+            policy["n_igate"] = np.random.rand(self.mem_block_size ** 2)
+            policy["b_igate"] = np.random.rand(self.mem_block_size)
+
+            # Block Input
+            policy["k_block"] = np.random.rand(self.mem_block_size)
+            policy["n_block"] = np.random.rand(self.mem_block_size ** 2)
+            policy["b_block"] = np.random.rand(self.mem_block_size)
+
+            # Read Gate
+            policy["k_rgate"] = np.random.rand(self.mem_block_size)
+            policy["r_rgate"] = np.random.rand(self.mem_block_size)
+            policy["n_rgate"] = np.random.rand(self.mem_block_size ** 2)
+            policy["b_rgate"] = np.random.rand(self.mem_block_size)
+
+            # Write Gate
+            policy["k_wgate"] = np.random.rand(self.mem_block_size)
+            policy["r_wgate"] = np.random.rand(self.mem_block_size)
+            policy["n_wgate"] = np.random.rand(self.mem_block_size ** 2)
+            policy["b_wgate"] = np.random.rand(self.mem_block_size)
 
             self.population["pop(0)".format(pop_id)] = policy
 
@@ -70,6 +109,139 @@ class Ccea:
                 k += 1
             self.team_selection[policy_id] = target  # Assign policy to team
 
+    def mutate_igate(self):
+        starting_pol = int(self.n_elites)
+        while starting_pol < self.pop_size:
+            for w in range(self.mem_block_size):
+                # Bias Weights
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["b_igate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["b_igate"][w] += mutation
+
+                # K Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["k_igate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["k_igate"][w] += mutation
+
+                # R Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["r_igate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["r_igate"][w] += mutation
+
+            for w in range(self.mem_block_size ** 2):
+                # N Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["n_igate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["n_igate"][w] += mutation
+
+            starting_pol += 1
+
+    def mutate_rgate(self):
+        starting_pol = int(self.n_elites)
+        while starting_pol < self.pop_size:
+            for w in range(self.mem_block_size):
+                # Bias Weights
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["b_rgate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["b_rgate"][w] += mutation
+
+                # K Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["k_rgate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["k_rgate"][w] += mutation
+
+                # R Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["r_rgate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["r_rgate"][w] += mutation
+
+            for w in range(self.mem_block_size ** 2):
+                # N Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["n_rgate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["n_rgate"][w] += mutation
+
+            starting_pol += 1
+
+    def mutate_wgate(self):
+        starting_pol = int(self.n_elites)
+        while starting_pol < self.pop_size:
+            for w in range(self.mem_block_size):
+                # Bias Weights
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["b_wgate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["b_wgate"][w] += mutation
+
+                # K Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["k_wgate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["k_wgate"][w] += mutation
+
+                # R Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["r_wgate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["r_wgate"][w] += mutation
+
+            for w in range(self.mem_block_size ** 2):
+                # N Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["n_wgate"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["n_wgate"][w] += mutation
+
+            starting_pol += 1
+
+    def mutate_block(self):
+        starting_pol = int(self.n_elites)
+        while starting_pol < self.pop_size:
+            for w in range(self.mem_block_size):
+                # Bias Weights
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["b_block"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["b_block"][w] += mutation
+
+                # K Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["k_block"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["k_block"][w] += mutation
+
+            for w in range(self.mem_block_size ** 2):
+                # N Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop(0)".format(starting_pol)]["n_block"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop(0)".format(starting_pol)]["n_block"][w] += mutation
+
+            starting_pol += 1
+
     def weight_mutate(self):
         """
         Mutate offspring populations (each weight has a probability of mutation)
@@ -79,46 +251,26 @@ class Ccea:
         starting_pol = int(self.n_elites)
         while starting_pol < self.pop_size:
             # Layer 1 Mutation
-            for w in range(self.n_layer1_w):
+            for w in range(self.n_outputs):
                 rnum = random.uniform(0, 1)
                 if rnum <= self.mut_chance:
-                    weight = self.population["pop(0)".format(starting_pol)]["layer1_weights"][w]
+                    weight = self.population["pop(0)".format(starting_pol)]["b_out"][w]
                     mutation = np.random.normal(0, self.mut_rate) * weight
-                    self.population["pop(0)".format(starting_pol)]["layer1_weights"][w] += mutation
+                    self.population["pop(0)".format(starting_pol)]["b_out"][w] += mutation
 
             # Layer 2 Mutation
-            for w in range(self.n_layer2_w):
+            for w in range(self.mem_block_size):
                 rnum = random.uniform(0, 1)
                 if rnum <= self.mut_chance:
-                    weight = self.population["pop(0)".format(starting_pol)]["layer2_weights"][w]
+                    weight = self.population["pop(0)".format(starting_pol)]["p_out"][w]
                     mutation = (np.random.normal(0, self.mut_rate)) * weight
-                    self.population["pop(0)".format(starting_pol)]["layer2_weights"][w] += mutation
-
-            # Input Gate Mutation
-            for w in range(self.n_igate_w):
-                rnum = random.uniform(0, 1)
-                if rnum <= self.mut_chance:
-                    weight = self.population["pop(0)".format(starting_pol)]["igate_weights"][w]
-                    mutation = (np.random.normal(0, self.mut_rate)) * weight
-                    self.population["pop(0)".format(starting_pol)]["igate_weights"][w] += mutation
-
-            # Read Gate Mutation
-            for w in range(self.n_rgate_w):
-                rnum = random.uniform(0, 1)
-                if rnum <= self.mut_chance:
-                    weight = self.population["pop(0)".format(starting_pol)]["rgate_weights"][w]
-                    mutation = (np.random.normal(0, self.mut_rate)) * weight
-                    self.population["pop(0)".format(starting_pol)]["rgate_weights"][w] += mutation
-
-            # Write Gate Mutation
-            for w in range(self.n_wgate_w):
-                rnum = random.uniform(0, 1)
-                if rnum <= self.mut_chance:
-                    weight = self.population["pop(0)".format(starting_pol)]["wgate_weights"][w]
-                    mutation = (np.random.normal(0, self.mut_rate)) * weight
-                    self.population["pop(0)".format(starting_pol)]["wgate_weights"][w] += mutation
+                    self.population["pop(0)".format(starting_pol)]["p_out"][w] += mutation
 
             starting_pol += 1
+
+        self.mutate_igate()
+        self.mutate_rgate()
+        self.mutate_wgate()
 
     def epsilon_greedy_select(self):  # Choose K solutions
         """
