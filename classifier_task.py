@@ -34,10 +34,21 @@ class sequenceClassifier:
 
             if self.training_set_answers[s, 0] > self.training_set_answers[s, 1]:
                 self.training_set_answers[s, 2] = -1
-            else:
+            elif self.training_set_answers[s, 0] < self.training_set_answers[s, 1]:
                 self.training_set_answers[s, 2] = 1
+            else:
+                if seq[len(seq)-1] == 1:
+                    seq[len(seq)-1] = -1
+                    self.training_set_answers[s, 0] += 1
+                    self.training_set_answers[s, 1] -= 1
+                    self.training_set_answers[s, 2] = -1
+                elif seq[len(seq)-1] == -1:
+                    seq[len(seq) - 1] = 1
+                    self.training_set_answers[s, 0] -= 1
+                    self.training_set_answers[s, 1] += 1
+                    self.training_set_answers[s, 2] = 1
 
-            self.training_set["set(0)".format(s)] = seq
+            self.training_set["set{0}".format(s)] = seq
 
     def generate_test_set(self):
         for s in range(self.test_set_size):
@@ -60,7 +71,18 @@ class sequenceClassifier:
 
             if self.test_set_answers[s, 0] > self.test_set_answers[s, 1]:
                 self.test_set_answers[s, 2] = -1
-            else:
+            elif self.test_set_answers[s, 0] < self.test_set_answers[s, 1]:
                 self.test_set_answers[s, 2] = 1
+            else:
+                if seq[len(seq)-1] == 1:
+                    seq[len(seq)-1] = -1
+                    self.test_set_answers[s, 0] += 1
+                    self.test_set_answers[s, 1] -= 1
+                    self.test_set_answers[s, 2] = -1
+                elif seq[len(seq)-1] == -1:
+                    seq[len(seq) - 1] = 1
+                    self.test_set_answers[s, 0] -= 1
+                    self.test_set_answers[s, 1] += 1
+                    self.test_set_answers[s, 2] = 1
 
-            self.test_set["set(0)".format(s)] = seq
+            self.test_set["set{0}".format(s)] = seq

@@ -14,7 +14,9 @@ class Agent:
         for v in range(self.mem_block_size):
             hblock[0, v] = self.tanh(hblock[0, v])
         wgate = np.reshape(nn_wgate, [1, self.mem_block_size])
-        self.mem_block = self.mem_block + np.multiply(wgate, hblock)
+        var = np.multiply(wgate, hblock)
+
+        self.mem_block = self.mem_block + var
 
     def tanh(self, inp):  # Tanh function as activation function
         """

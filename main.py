@@ -12,8 +12,8 @@ def set_parameters():
     parameters["s_runs"] = 1
 
     # Sequence Classifier
-    parameters["depth"] = 5
-    parameters["train_set_size"] = 50
+    parameters["depth"] = 4
+    parameters["train_set_size"] = 70
     parameters["test_set_size"] = 10
 
     # Neural Network Parameters
@@ -48,17 +48,21 @@ def main():
         # Training
         sc.generate_training_set()
         for gen in range(param["generations"]):
-            for pol in range(param["pop_size"]):  # Test each set of weights in EA
-                nn.reset_nn()
-                weights = cc.population["pop(0)".format(pol)]
-                nn.get_weights(weights)
 
+            pop_id = cc.n_elites
+            while pop_id < param["pop_size"]:  # Test each set of weights in EA
+                nn.reset_nn()
+                nn.get_weights(cc.population["pop{0}".format(pop_id)])
                 fitness_score = 0.0
+
                 for seq in range(param["train_set_size"]):
                     ag.reset_mem_block()
-                    seq_len = len(sc.training_set["set(0)".format(seq)])
+                    nn.clear_outputs()
+                    seq_len = len(sc.training_set["set{0}".format(seq)])
+                    current_sequence = sc.training_set["set{0}".format(seq)].copy()
+
                     for num in range(seq_len):
-                        state_vec[0] = sc.training_set["set(0)".format(seq)][num]
+                        state_vec[0] = current_sequence[num]
                         nn.run_neural_network(state_vec, ag.mem_block)
                         ag.update_memory(nn.block_output, nn.wgate_outputs)
 
@@ -67,10 +71,11 @@ def main():
                     elif nn.out_layer[0] >= 0.5 and sc.training_set_answers[seq, 2] == 1:
                         fitness_score += 1
 
-                cc.fitness[pol] = fitness_score
+                cc.fitness[pop_id] = fitness_score
+                pop_id += 1
 
             cc.down_select()
-            print(max(cc.fitness))
+            print("Generation: ", gen, "  Fitness: ", max(cc.fitness))
 
 
 main()
