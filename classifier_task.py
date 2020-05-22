@@ -14,6 +14,11 @@ class sequenceClassifier:
         self.test_set_answers = np.zeros((self.test_set_size, 3))
 
     def generate_training_set(self):
+        """
+        Create a training set to train the GRU-MB
+        :return:
+        """
+        self.training_set = {}
         for s in range(self.training_set_size):
             seq = []
             counter = 0
@@ -51,6 +56,11 @@ class sequenceClassifier:
             self.training_set["set{0}".format(s)] = seq
 
     def generate_test_set(self):
+        """
+        Create a test set of sequences to test the best GRU-MB
+        :return:
+        """
+        self.test_set = {}
         for s in range(self.test_set_size):
             seq = []
             counter = 0
