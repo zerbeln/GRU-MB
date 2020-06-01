@@ -10,12 +10,12 @@ def set_parameters():
 
     # Test Parameters
     parameters["n_agents"] = 1
-    parameters["s_runs"] = 30
+    parameters["s_runs"] = 1
 
     # Sequence Classifier
     parameters["depth"] = 4
-    parameters["train_set_size"] = 100
-    parameters["test_set_size"] = 10
+    parameters["train_set_size"] = 200
+    parameters["test_set_size"] = 50
 
     # Neural Network Parameters
     parameters["n_inputs"] = 1
@@ -24,12 +24,12 @@ def set_parameters():
     parameters["mem_block_size"] = 5  # Number of elements in each memory block entry
 
     # CCEA Parameters
-    parameters["pop_size"] = 30
+    parameters["pop_size"] = 100
     parameters["m_rate"] = 0.1
     parameters["m_prob"] = 0.1
     parameters["epsilon"] = 0.1
     parameters["generations"] = 1000
-    parameters["n_elites"] = 2
+    parameters["n_elites"] = 10
 
     return parameters
 
@@ -54,9 +54,10 @@ def main():
     nn = NeuralNetwork(param)
 
     for s in range(param["s_runs"]):
-
+        print("Stat Run: ", s)
         # Training
-        reward_history = []
+        training_reward_history = []
+        test_reward_history = []
         sc.generate_training_set()
         state_vec = np.ones(param["n_inputs"])
         if s > 0:
@@ -87,38 +88,36 @@ def main():
                 cc.fitness[pop_id] = fitness_score
                 pop_id += 1
 
+            # Testing
+            sc.generate_test_set()
+            state_vec = np.ones(param["n_inputs"])
+            best_pol_id = np.argmax(cc.fitness)
+            nn.reset_nn()
+            nn.get_weights(cc.population["pop{0}".format(best_pol_id)])
+            test_reward = 0.0
+
+            for seq in range(param["test_set_size"]):
+                ag.reset_mem_block()
+                nn.clear_outputs()
+                seq_len = len(sc.test_set["set{0}".format(seq)])
+                current_sequence = sc.test_set["set{0}".format(seq)].copy()
+
+                for num in range(seq_len):
+                    state_vec[0] = current_sequence[num]
+                    nn.run_neural_network(state_vec, ag.mem_block)
+                    ag.update_memory(nn.block_output, nn.wgate_outputs)
+
+                if nn.out_layer[0] < 0.5 and sc.training_set_answers[seq, 2] == -1:
+                    test_reward += 1
+                elif nn.out_layer[0] >= 0.5 and sc.training_set_answers[seq, 2] == 1:
+                    test_reward += 1
+
+            test_reward_history.append(test_reward)
+            training_reward_history.append(max(cc.fitness))
             cc.down_select()
-            reward_history.append(max(cc.fitness))
 
-        save_reward_history(reward_history, "Training_Fitness.csv")
-
-        # Testing
-        reward_history = []
-        sc.generate_test_set()
-        state_vec = np.ones(param["n_inputs"])
-        best_pol_id = np.argmax(cc.fitness)
-        nn.reset_nn()
-        nn.get_weights(cc.population["pop{0}".format(best_pol_id)])
-        final_reward = 0.0
-
-        for seq in range(param["test_set_size"]):
-            ag.reset_mem_block()
-            nn.clear_outputs()
-            seq_len = len(sc.test_set["set{0}".format(seq)])
-            current_sequence = sc.test_set["set{0}".format(seq)].copy()
-
-            for num in range(seq_len):
-                state_vec[0] = current_sequence[num]
-                nn.run_neural_network(state_vec, ag.mem_block)
-                ag.update_memory(nn.block_output, nn.wgate_outputs)
-
-            if nn.out_layer[0] < 0.5 and sc.training_set_answers[seq, 2] == -1:
-                final_reward += 1
-            elif nn.out_layer[0] >= 0.5 and sc.training_set_answers[seq, 2] == 1:
-                final_reward += 1
-
-        reward_history.append(final_reward)
-        save_reward_history(reward_history, "Test_Reward.csv")
+        save_reward_history(training_reward_history, "Training_Fitness.csv")
+        save_reward_history(test_reward_history, "Test_Reward.csv")
 
 
 main()
