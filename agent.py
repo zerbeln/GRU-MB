@@ -9,23 +9,13 @@ class Agent:
     def reset_mem_block(self):
         self.mem_block = np.zeros(self.mem_block_size)
 
-    def update_memory(self, nn_hblock, nn_wgate):
-        hblock = np.reshape(nn_hblock, [1, self.mem_block_size])
-        for v in range(self.mem_block_size):
-            hblock[0, v] = self.tanh(hblock[0, v])
+    def update_memory(self, nn_wgate, nn_encoded_mem):
+        alpha = 0.1
         wgate = np.reshape(nn_wgate, [1, self.mem_block_size])
-        var = np.multiply(wgate, hblock)
+        enc_mem = np.reshape(nn_encoded_mem, [1, self.mem_block_size])
 
-        self.mem_block = self.mem_block + var
+        var1 = (1-alpha)*(self.mem_block + np.multiply(wgate, enc_mem))
+        var2 = alpha*(np.multiply(wgate, enc_mem) + np.multiply((1-wgate), self.mem_block))
 
-    def tanh(self, inp):  # Tanh function as activation function
-        """
-        NN activation function
-        :param inp: Node value in NN (pre-activation function)
-        :return: tanh value
-        """
-
-        tanh = (2/(1 + np.exp(-2*inp)))-1
-
-        return tanh
+        self.mem_block = var1 + var2
 

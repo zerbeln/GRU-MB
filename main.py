@@ -9,8 +9,7 @@ def set_parameters():
     parameters = {}
 
     # Test Parameters
-    parameters["n_agents"] = 1
-    parameters["s_runs"] = 1
+    parameters["s_runs"] = 10
 
     # Sequence Classifier
     parameters["depth"] = 4
@@ -78,21 +77,21 @@ def main():
                     for num in range(seq_len):
                         state_vec[0] = current_sequence[num]
                         nn.run_neural_network(state_vec, ag.mem_block)
-                        ag.update_memory(nn.block_output, nn.wgate_outputs)
+                        ag.update_memory(nn.wgate_outputs, nn.encoded_memory)
 
                     if nn.out_layer[0] < 0.5 and sc.training_set_answers[seq, 2] == -1:
                         fitness_score += 1
                     elif nn.out_layer[0] >= 0.5 and sc.training_set_answers[seq, 2] == 1:
                         fitness_score += 1
 
-                cc.fitness[pop_id] = fitness_score
+                cc.fitness[pop_id] = fitness_score/param["train_set_size"]
                 pop_id += 1
 
             # Testing
-            sc.generate_test_set()
-            state_vec = np.ones(param["n_inputs"])
-            best_pol_id = np.argmax(cc.fitness)
             nn.reset_nn()
+            sc.generate_test_set()  # Create a new test set
+            state_vec = np.ones(param["n_inputs"])
+            best_pol_id = np.argmax(cc.fitness)  # Find the best policy in the population currently
             nn.get_weights(cc.population["pop{0}".format(best_pol_id)])
             test_reward = 0.0
 
@@ -112,7 +111,7 @@ def main():
                 elif nn.out_layer[0] >= 0.5 and sc.training_set_answers[seq, 2] == 1:
                     test_reward += 1
 
-            test_reward_history.append(test_reward)
+            test_reward_history.append(test_reward/param["test_set_size"])
             training_reward_history.append(max(cc.fitness))
             cc.down_select()
 

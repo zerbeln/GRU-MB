@@ -46,6 +46,12 @@ class Ccea:
             policy["n_wgate"] = np.random.rand(self.mem_block_size**2)
             policy["b_wgate"] = np.random.rand(self.mem_block_size)
 
+            # Memory
+            policy["n_dec"] = np.random.rand(self.mem_block_size**2)
+            policy["b_dec"] = np.random.rand(self.mem_block_size)
+            policy["z_enc"] = np.random.rand(self.mem_block_size**2)
+            policy["b_enc"] = np.random.rand(self.mem_block_size)
+
             self.population["pop{0}".format(pop_id)] = policy.copy()
 
     def reset_population(self):  # Re-initializes CCEA populations for new run
@@ -84,6 +90,12 @@ class Ccea:
             policy["r_wgate"] = np.random.rand(self.mem_block_size)
             policy["n_wgate"] = np.random.rand(self.mem_block_size ** 2)
             policy["b_wgate"] = np.random.rand(self.mem_block_size)
+
+            # Memory
+            policy["n_dec"] = np.random.rand(self.mem_block_size ** 2)
+            policy["b_dec"] = np.random.rand(self.mem_block_size)
+            policy["z_enc"] = np.random.rand(self.mem_block_size ** 2)
+            policy["b_enc"] = np.random.rand(self.mem_block_size)
 
             self.population["pop{0}".format(pop_id)] = policy.copy()
 
@@ -220,6 +232,40 @@ class Ccea:
 
             starting_pol += 1
 
+    def mutate_mem_weights(self):
+        starting_pol = int(self.n_elites)
+        while starting_pol < self.pop_size:
+            for w in range(self.mem_block_size):
+                # Bias Weights
+                rnum1 = random.uniform(0, 1)
+                if rnum1 <= self.mut_chance:
+                    weight = self.population["pop{0}".format(starting_pol)]["b_enc"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop{0}".format(starting_pol)]["b_enc"][w] += mutation
+
+                rnum2 = random.uniform(0, 1)
+                if rnum2 <= self.mut_chance:
+                    weight = self.population["pop{0}".format(starting_pol)]["b_dec"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop{0}".format(starting_pol)]["b_dec"][w] += mutation
+
+            for w in range(self.mem_block_size ** 2):
+                # N Matrix
+                rnum = random.uniform(0, 1)
+                if rnum <= self.mut_chance:
+                    weight = self.population["pop{0}".format(starting_pol)]["n_dec"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop{0}".format(starting_pol)]["n_dec"][w] += mutation
+
+                # Z Matrix
+                rnum3 = random.uniform(0, 1)
+                if rnum3 <= self.mut_chance:
+                    weight = self.population["pop{0}".format(starting_pol)]["z_enc"][w]
+                    mutation = (np.random.normal(0, self.mut_rate)) * weight
+                    self.population["pop{0}".format(starting_pol)]["z_enc"][w] += mutation
+
+            starting_pol += 1
+
     def weight_mutate(self):
         """
         Mutate offspring populations (each weight has a probability of mutation)
@@ -250,6 +296,7 @@ class Ccea:
         self.mutate_rgate()
         self.mutate_wgate()
         self.mutate_block()
+        self.mutate_mem_weights()
 
     def epsilon_greedy_select(self):  # Choose K solutions
         """

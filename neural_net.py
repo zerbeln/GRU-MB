@@ -33,6 +33,12 @@ class NeuralNetwork:
         self.wgate_weights = {}
         self.wgate_outputs = np.mat(np.zeros(self.mem_block_size))
 
+        # Memory
+        self.decoded_memory = np.mat(np.zeros(self.mem_block_size))
+        self.encoded_memory = np.mat(np.zeros(self.mem_block_size))
+        self.decoder_weights = {}
+        self.encoder_weights = {}
+
     def clear_outputs(self):
         self.igate_outputs = np.mat(np.zeros(self.mem_block_size))
         self.wgate_outputs = np.mat(np.zeros(self.mem_block_size))
@@ -69,6 +75,12 @@ class NeuralNetwork:
         # Write Gate
         self.wgate_weights = {}
         self.wgate_outputs = np.mat(np.zeros(self.mem_block_size))
+
+        # Memory
+        self.decoded_memory = np.mat(np.zeros(self.mem_block_size))
+        self.encoded_memory = np.mat(np.zeros(self.mem_block_size))
+        self.decoder_weights = {}
+        self.encoder_weights = {}
 
     def get_weights(self, weights):  # Get weights from CCEA population
         """
@@ -107,6 +119,14 @@ class NeuralNetwork:
         self.wgate_weights["N"] = np.reshape(n_mat, [self.mem_block_size, self.mem_block_size])  # nxn
         self.wgate_weights["b"] = np.reshape(np.mat(weights["b_wgate"]), [self.mem_block_size, 1])  # nx1
 
+        # Memory Weights
+        n_mat_dec = np.mat(weights["n_dec"])
+        n_mat_enc = np.mat(weights["z_enc"])
+        self.decoder_weights["N"] = np.reshape(n_mat_dec, [self.mem_block_size, self.mem_block_size])  # nxn
+        self.decoder_weights["b"] = np.reshape(np.mat(weights["b_dec"]), [self.mem_block_size, 1])  # nx1
+        self.encoder_weights["Z"] = np.reshape(n_mat_enc, [self.mem_block_size, self.mem_block_size])  # nxn
+        self.encoder_weights["b"] = np.reshape(np.mat(weights["b_enc"]), [self.mem_block_size, 1])  # nx1
+
     def run_input_gate(self, state_vec, mem_block):
         """
         Process sensor inputs through input gate
@@ -120,11 +140,11 @@ class NeuralNetwork:
         m = np.reshape(np.mat(mem_block), [self.mem_block_size, 1])  # nx1
         b = self.igate_weights["b"]  # nx1
 
-        x_final = np.dot(self.igate_weights["K"], x)  # nx1 * 1x1
-        y_final = np.dot(self.igate_weights["R"], y)  # nx1 * 1x1
-        m_final = np.dot(self.igate_weights["N"], m)  # nxn * nx1
+        Ki_x = np.dot(self.igate_weights["K"], x)  # nx1 * 1x1
+        Ri_y = np.dot(self.igate_weights["R"], y)  # nx1 * 1x1
+        Ni_m = np.dot(self.igate_weights["N"], m)  # nxn * nx1
 
-        self.igate_outputs = x_final + y_final + m_final + b
+        self.igate_outputs = Ki_x + Ri_y + Ni_m + b  # nx1
         for i in range(self.mem_block_size):
             self.igate_outputs[i, 0] = self.sigmoid(self.igate_outputs[i, 0])
 
@@ -139,11 +159,11 @@ class NeuralNetwork:
         m = np.reshape(np.mat(mem_block), [self.mem_block_size, 1])  # nx1
         b = self.rgate_weights["b"]  # nx1
 
-        x_final = np.dot(self.rgate_weights["K"], x)  # nx1 * 1x1
-        y_final = np.dot(self.rgate_weights["R"], y)  # nx1 * 1x1
-        m_final = np.dot(self.rgate_weights["N"], m)  # nxn * 1x1
+        Kr_x = np.dot(self.rgate_weights["K"], x)  # nx1 * 1x1
+        Rr_y = np.dot(self.rgate_weights["R"], y)  # nx1 * 1x1
+        Nr_m = np.dot(self.rgate_weights["N"], m)  # nxn * 1x1
 
-        self.rgate_outputs = x_final + y_final + m_final + b
+        self.rgate_outputs = Kr_x + Rr_y + Nr_m + b  # nx1
         for i in range(self.mem_block_size):
             self.rgate_outputs[i, 0] = self.sigmoid(self.rgate_outputs[i, 0])
 
@@ -158,11 +178,11 @@ class NeuralNetwork:
         m = np.reshape(np.mat(mem_block), [self.mem_block_size, 1])  # nx1
         b = self.wgate_weights["b"]  # nx1
 
-        x_final = np.dot(self.wgate_weights["K"], x)  # nx1 * 1x1
-        y_final = np.dot(self.wgate_weights["R"], y)  # nx1 * 1x1
-        m_final = np.dot(self.wgate_weights["N"], m)  # nxn * nx1
+        Kw_x = np.dot(self.wgate_weights["K"], x)  # nx1 * 1x1
+        Rw_x = np.dot(self.wgate_weights["R"], y)  # nx1 * 1x1
+        Nw_x = np.dot(self.wgate_weights["N"], m)  # nxn * nx1
 
-        self.wgate_outputs = x_final + y_final + m_final + b
+        self.wgate_outputs = Kw_x + Rw_x + Nw_x + b  # nx1
         for i in range(self.mem_block_size):
             self.wgate_outputs[i, 0] = self.sigmoid(self.wgate_outputs[i, 0])
 
@@ -176,22 +196,50 @@ class NeuralNetwork:
         m = np.reshape(np.mat(mem_block), [self.mem_block_size, 1])  # nx1
         b = self.block_weights["b"]  # nx1
 
-        X = np.dot(self.block_weights["K"], x)  # nx1 * 1x1
-        M = np.dot(self.block_weights["N"], m)  # nxn * nx1
+        Kp_x = np.dot(self.block_weights["K"], x)  # nx1 * 1x1
+        Np_m = np.dot(self.block_weights["N"], m)  # nxn * nx1
 
-        self.block_input = X + M + b
+        self.block_input = Kp_x + Np_m + b  # nx1
+        for i in range(self.mem_block_size):
+            self.block_input[i, 0] = self.sigmoid(self.block_input[i, 0])
 
-    def feedforward_network(self, mem_block):
+    def memory_decoder(self, mem_block):
+        """
+        Decode memory for hidden activation
+        :param mem_block:
+        :return:
+        """
+
+        m = np.reshape(np.mat(mem_block), [self.mem_block_size, 1])
+        Nd_m = np.dot(self.decoder_weights["N"], m)  # nxn * nx1
+        b = self.decoder_weights["b"]  # nx1
+
+        self.decoded_memory = Nd_m + b  # nx1
+        for i in range(self.mem_block_size):
+            self.decoded_memory[i, 0] = self.tanh(self.decoded_memory[i, 0])
+
+    def memory_encoder(self):
+        """
+        Encode memory for update
+        :return:
+        """
+        b = self.encoder_weights["b"]  # nx1
+        Z_h = np.dot(self.encoder_weights["Z"], self.block_output)  # nxn * nx1
+
+        self.encoded_memory = Z_h + b  # nx1
+        for i in range(self.mem_block_size):
+            self.encoded_memory[i, 0] = self.tanh(self.encoded_memory[i, 0])
+
+    def hidden_activation(self):
         """
         Run NN to receive rover action outputs
         :return: None
         """
 
-        m = np.reshape(np.mat(mem_block), [self.mem_block_size, 1])  # nx1
-        x1 = np.multiply(self.rgate_outputs, m)
-        x2 = np.multiply(self.block_input, self.igate_outputs)
+        r_d = np.multiply(self.rgate_outputs, self.decoded_memory)  # nx1
+        p_i = np.multiply(self.block_input, self.igate_outputs)  # nx1
 
-        self.block_output = x1 + x2
+        self.block_output = r_d + p_i  # nx1
 
         self.out_layer = np.dot(self.out_layer_weights, self.block_output) + self.out_bias_weights  # 1x1
 
@@ -233,6 +281,8 @@ class NeuralNetwork:
         self.run_input_gate(state_vec, mem_block)
         self.run_read_gate(state_vec, mem_block)
         self.create_block_inputs(state_vec, mem_block)
-        self.feedforward_network(mem_block)
+        self.memory_decoder(mem_block)
+        self.hidden_activation()
         self.run_write_gate(state_vec, mem_block)
+        self.memory_encoder()
         self.prev_out_layer = self.out_layer.copy()
