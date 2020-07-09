@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import copy
 
 
 class Ccea:
@@ -52,7 +53,7 @@ class Ccea:
             policy["z_enc"] = np.random.rand(self.mem_block_size**2)
             policy["b_enc"] = np.random.rand(self.mem_block_size)
 
-            self.population["pop{0}".format(pop_id)] = policy.copy()
+            self.population["pop{0}".format(pop_id)] = copy.deepcopy(policy)
 
     def reset_population(self):  # Re-initializes CCEA populations for new run
         """
@@ -97,7 +98,7 @@ class Ccea:
             policy["z_enc"] = np.random.rand(self.mem_block_size ** 2)
             policy["b_enc"] = np.random.rand(self.mem_block_size)
 
-            self.population["pop{0}".format(pop_id)] = policy.copy()
+            self.population["pop{0}".format(pop_id)] = copy.deepcopy(policy)
 
     def mutate_igate(self):
         starting_pol = int(self.n_elites)
@@ -307,18 +308,18 @@ class Ccea:
         new_population = {}
         for pol_id in range(self.pop_size):
             if pol_id < self.n_elites:
-                new_population["pop{0}".format(pol_id)] = self.population["pop{0}".format(pol_id)].copy()
+                new_population["pop{0}".format(pol_id)] = copy.deepcopy(self.population["pop{0}".format(pol_id)])
             else:
                 rnum = random.uniform(0, 1)
                 if rnum > self.eps:
                     max_index = np.argmax(self.fitness)
-                    new_population["pop{0}".format(pol_id)] = self.population["pop{0}".format(max_index)].copy()
+                    new_population["pop{0}".format(pol_id)] = copy.deepcopy(self.population["pop{0}".format(max_index)])
                 else:
                     parent = random.randint(1, (self.pop_size-1))
-                    new_population["pop{0}".format(pol_id)] = self.population["pop{0}".format(parent)].copy()
+                    new_population["pop{0}".format(pol_id)] = copy.deepcopy(self.population["pop{0}".format(parent)])
 
         self.population = {}
-        self.population = new_population.copy()
+        self.population = copy.deepcopy(new_population)
 
     def fitness_prop_selection(self):
         summed_fitness = np.sum(self.fitness)
@@ -333,17 +334,17 @@ class Ccea:
         new_population = {}
         for pol_id in range(self.pop_size):
             if pol_id < self.n_elites:
-                new_population["pop{0}".format(pol_id)] = self.population["pop{0}".format(pol_id)].copy()
+                new_population["pop{0}".format(pol_id)] = copy.deepcopy(self.population["pop{0}".format(pol_id)])
             else:
                 rnum = random.uniform(0, 1)
                 for p_id in range(self.pop_size):
                     if p_id == 0 and rnum < fit_brackets[0]:
-                        new_population["pop{0}".format(pol_id)] = self.population["pop{0}".format(0)].copy()
+                        new_population["pop{0}".format(pol_id)] = copy.deepcopy(self.population["pop{0}".format(0)])
                     elif fit_brackets[p_id-1] <= rnum < fit_brackets[p_id]:
-                        new_population["pop{0}".format(pol_id)] = self.population["pop{0}".format(p_id)].copy()
+                        new_population["pop{0}".format(pol_id)] = copy.deepcopy(self.population["pop{0}".format(p_id)])
 
         self.population = {}
-        self.population = new_population.copy()
+        self.population = copy.deepcopy(new_population)
 
     def rank_population(self):
 
@@ -353,12 +354,12 @@ class Ccea:
         for pop_id in range(self.pop_size):
             targ_id = np.argmax(copy_of_fitness)
             fit = copy_of_fitness[targ_id]
-            ranked_population["pop{0}".format(pop_id)] = self.population["pop{0}".format(targ_id)].copy()
+            ranked_population["pop{0}".format(pop_id)] = copy.deepcopy(self.population["pop{0}".format(targ_id)])
             self.fitness[pop_id] = fit
             copy_of_fitness[targ_id] = -1000.00
 
         self.population = {}
-        self.population = ranked_population.copy()
+        self.population = copy.deepcopy(ranked_population)
 
     def down_select(self):  # Create a new offspring population using parents from top 50% of policies
         """
