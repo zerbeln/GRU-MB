@@ -19,43 +19,7 @@ class Ccea:
         self.n_outputs = parameters["n_outputs"]
         self.mem_block_size = parameters["mem_block_size"]
 
-        for pop_id in range(self.pop_size):
-            policy = {}
-            policy["b_out"] = np.random.rand(self.n_outputs)
-            policy["p_out"] = np.random.rand(self.mem_block_size)
-
-            # Input Gate
-            policy["k_igate"] = np.random.rand(self.mem_block_size)
-            policy["r_igate"] = np.random.rand(self.mem_block_size)
-            policy["n_igate"] = np.random.rand(self.mem_block_size**2)
-            policy["b_igate"] = np.random.rand(self.mem_block_size)
-
-            # Block Input
-            policy["k_block"] = np.random.rand(self.mem_block_size)
-            policy["n_block"] = np.random.rand(self.mem_block_size**2)
-            policy["b_block"] = np.random.rand(self.mem_block_size)
-
-            # Read Gate
-            policy["k_rgate"] = np.random.rand(self.mem_block_size)
-            policy["r_rgate"] = np.random.rand(self.mem_block_size)
-            policy["n_rgate"] = np.random.rand(self.mem_block_size**2)
-            policy["b_rgate"] = np.random.rand(self.mem_block_size)
-
-            # Write Gate
-            policy["k_wgate"] = np.random.rand(self.mem_block_size)
-            policy["r_wgate"] = np.random.rand(self.mem_block_size)
-            policy["n_wgate"] = np.random.rand(self.mem_block_size**2)
-            policy["b_wgate"] = np.random.rand(self.mem_block_size)
-
-            # Memory
-            policy["n_dec"] = np.random.rand(self.mem_block_size**2)
-            policy["b_dec"] = np.random.rand(self.mem_block_size)
-            policy["z_enc"] = np.random.rand(self.mem_block_size**2)
-            policy["b_enc"] = np.random.rand(self.mem_block_size)
-
-            self.population["pop{0}".format(pop_id)] = copy.deepcopy(policy)
-
-    def reset_population(self):  # Re-initializes CCEA populations for new run
+    def create_new_population(self):  # Re-initializes CCEA populations for new run
         """
         Create new populations (for beginning of stat run)
         :return: None
@@ -66,39 +30,39 @@ class Ccea:
 
         for pop_id in range(self.pop_size):
             policy = {}
-            policy["b_out"] = np.random.rand(self.n_outputs)
-            policy["p_out"] = np.random.rand(self.mem_block_size)
+            policy["b_out"] = np.random.normal(0, 0.5, self.n_outputs)
+            policy["p_out"] = np.random.normal(0, 0.5, self.mem_block_size)
 
             # Input Gate
-            policy["k_igate"] = np.random.rand(self.mem_block_size)
-            policy["r_igate"] = np.random.rand(self.mem_block_size)
-            policy["n_igate"] = np.random.rand(self.mem_block_size ** 2)
-            policy["b_igate"] = np.random.rand(self.mem_block_size)
+            policy["k_igate"] = np.random.normal(0, 0.5, self.mem_block_size)
+            policy["r_igate"] = np.random.normal(0, 0.5, self.mem_block_size)
+            policy["n_igate"] = np.random.normal(0, 0.5, self.mem_block_size ** 2)
+            policy["b_igate"] = np.random.normal(0, 0.5, self.mem_block_size)
 
             # Block Input
-            policy["k_block"] = np.random.rand(self.mem_block_size)
-            policy["n_block"] = np.random.rand(self.mem_block_size ** 2)
-            policy["b_block"] = np.random.rand(self.mem_block_size)
+            policy["k_block"] = np.random.normal(0, 0.5, self.mem_block_size)
+            policy["n_block"] = np.random.normal(0, 0.5, self.mem_block_size ** 2)
+            policy["b_block"] = np.random.normal(0, 0.5, self.mem_block_size)
 
             # Read Gate
-            policy["k_rgate"] = np.random.rand(self.mem_block_size)
-            policy["r_rgate"] = np.random.rand(self.mem_block_size)
-            policy["n_rgate"] = np.random.rand(self.mem_block_size ** 2)
-            policy["b_rgate"] = np.random.rand(self.mem_block_size)
+            policy["k_rgate"] = np.random.normal(0, 0.5, self.mem_block_size)
+            policy["r_rgate"] = np.random.normal(0, 0.5, self.mem_block_size)
+            policy["n_rgate"] = np.random.normal(0, 0.5, self.mem_block_size ** 2)
+            policy["b_rgate"] = np.random.normal(0, 0.5, self.mem_block_size)
 
             # Write Gate
-            policy["k_wgate"] = np.random.rand(self.mem_block_size)
-            policy["r_wgate"] = np.random.rand(self.mem_block_size)
-            policy["n_wgate"] = np.random.rand(self.mem_block_size ** 2)
-            policy["b_wgate"] = np.random.rand(self.mem_block_size)
+            policy["k_wgate"] = np.random.normal(0, 0.5, self.mem_block_size)
+            policy["r_wgate"] = np.random.normal(0, 0.5, self.mem_block_size)
+            policy["n_wgate"] = np.random.normal(0, 0.5, self.mem_block_size ** 2)
+            policy["b_wgate"] = np.random.normal(0, 0.5, self.mem_block_size)
 
             # Memory
-            policy["n_dec"] = np.random.rand(self.mem_block_size ** 2)
-            policy["b_dec"] = np.random.rand(self.mem_block_size)
-            policy["z_enc"] = np.random.rand(self.mem_block_size ** 2)
-            policy["b_enc"] = np.random.rand(self.mem_block_size)
+            policy["n_dec"] = np.random.normal(0, 0.5, self.mem_block_size ** 2)
+            policy["b_dec"] = np.random.normal(0, 0.5, self.mem_block_size)
+            policy["z_enc"] = np.random.normal(0, 0.5, self.mem_block_size ** 2)
+            policy["b_enc"] = np.random.normal(0, 0.5, self.mem_block_size)
 
-            self.population["pop{0}".format(pop_id)] = copy.deepcopy(policy)
+            self.population["pop{0}".format(pop_id)] = policy.copy()
 
     def mutate_igate(self):
         starting_pol = int(self.n_elites)
@@ -347,16 +311,19 @@ class Ccea:
         self.population = copy.deepcopy(new_population)
 
     def rank_population(self):
-
-        copy_of_fitness = self.fitness.copy()
-
+        """
+        Reorders the population in terms of fitness (high to low)
+        :return:
+        """
         ranked_population = {}
-        for pop_id in range(self.pop_size):
-            targ_id = np.argmax(copy_of_fitness)
-            fit = copy_of_fitness[targ_id]
-            ranked_population["pop{0}".format(pop_id)] = copy.deepcopy(self.population["pop{0}".format(targ_id)])
-            self.fitness[pop_id] = fit
-            copy_of_fitness[targ_id] = -1000.00
+        for pop_id_a in range(self.pop_size):
+            pop_id_b = pop_id_a + 1
+            ranked_population["pop{0}".format(pop_id_a)] = copy.deepcopy(self.population["pop{0}".format(pop_id_a)])
+            while pop_id_b < self.pop_size:
+                if pop_id_a != pop_id_b and self.fitness[pop_id_a] < self.fitness[pop_id_b]:
+                    self.fitness[pop_id_a], self.fitness[pop_id_b] = self.fitness[pop_id_b], self.fitness[pop_id_a]
+                    ranked_population["pop{0}".format(pop_id_a)] = copy.deepcopy(self.population["pop{0}".format(pop_id_b)])
+                pop_id_b += 1
 
         self.population = {}
         self.population = copy.deepcopy(ranked_population)
@@ -366,11 +333,14 @@ class Ccea:
         Select parents create offspring population, and perform mutation operations
         :return: None
         """
-
         self.rank_population()
         # self.epsilon_greedy_select()  # Select K successors using epsilon greedy
         self.fitness_prop_selection()  # Select k successors using fit prop selection
         self.weight_mutate()  # Mutate successors
 
     def reset_fitness(self):
+        """
+        Clear the saved fitness of each policy
+        :return:
+        """
         self.fitness = np.zeros(self.pop_size)

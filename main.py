@@ -5,16 +5,22 @@ from agent import Agent
 from classifier_task import sequenceClassifier
 import csv; import os
 
+
 def set_parameters():
+    """
+    Create a dictionary of all critical test parameters
+    :return:
+    """
     parameters = {}
 
     # Test Parameters
-    parameters["s_runs"] = 10
+    parameters["s_runs"] = 1
+    parameters["create_new_sets"] = 1  # 1 = create new sequences, 0 = re-use sequences
 
     # Sequence Classifier
     parameters["depth"] = 4
-    parameters["train_set_size"] = 200
-    parameters["test_set_size"] = 50
+    parameters["train_set_size"] = 50
+    parameters["test_set_size"] = 20
 
     # Neural Network Parameters
     parameters["n_inputs"] = 1
@@ -32,7 +38,14 @@ def set_parameters():
 
     return parameters
 
+
 def save_reward_history(reward_history, file_name):
+    """
+    Save the reward history for the best policy using the test set at each generation
+    :param reward_history:
+    :param file_name:
+    :return:
+    """
     dir_name = 'Output_Data/'  # Intended directory for output files
 
     if not os.path.exists(dir_name):  # If Data directory does not exist, create it
@@ -44,31 +57,42 @@ def save_reward_history(reward_history, file_name):
         writer = csv.writer(csvfile)
         writer.writerow(['Performance'] + reward_history)
 
+
 def main():
     # Test Parameters
-    param = set_parameters()
-    sc = sequenceClassifier(param)
-    ag = Agent(param)
-    cc = Ccea(param)
-    nn = NeuralNetwork(param)
+    p = set_parameters()
+    sc = sequenceClassifier(p)
+    ag = Agent(p)
+    cc = Ccea(p)
+    nn = NeuralNetwork(p)
 
-    for s in range(param["s_runs"]):
+    if p["create_new_sets"] == 1:
+        sc.create_training_set()
+        sc.save_training_set()
+        sc.create_test_set()
+        sc.save_test_set()
+    else:
+        sc.load_training_set()
+        sc.load_test_set()
+
+    for s in range(p["s_runs"]):
         print("Stat Run: ", s)
         # Training
         training_reward_history = []
         test_reward_history = []
-        sc.generate_training_set()
-        state_vec = np.ones(param["n_inputs"])
-        if s > 0:
-            cc.reset_population()
-        for gen in range(param["generations"]):
+        state_vec = np.ones(p["n_inputs"])
+
+        cc.create_new_population()
+
+        for gen in range(p["generations"]):
+            print("Gen: ", gen)
             pop_id = cc.n_elites
-            while pop_id < param["pop_size"]:  # Test each set of weights in EA
+            while pop_id < p["pop_size"]:  # Test each set of weights in EA
                 nn.reset_nn()
                 nn.get_weights(cc.population["pop{0}".format(pop_id)])
                 fitness_score = 0.0
 
-                for seq in range(param["train_set_size"]):
+                for seq in range(p["train_set_size"]):
                     ag.reset_mem_block()
                     nn.clear_outputs()
                     seq_len = len(sc.training_set["set{0}".format(seq)])
@@ -84,18 +108,17 @@ def main():
                     elif nn.out_layer[0] >= 0.5 and sc.training_set_answers[seq, 2] == 1:
                         fitness_score += 1
 
-                cc.fitness[pop_id] = fitness_score/param["train_set_size"]
+                cc.fitness[pop_id] = fitness_score/p["train_set_size"]
                 pop_id += 1
 
             # Testing
             nn.reset_nn()
-            sc.generate_test_set()  # Create a new test set
-            state_vec = np.ones(param["n_inputs"])
+            state_vec = np.ones(p["n_inputs"])
             best_pol_id = np.argmax(cc.fitness)  # Find the best policy in the population currently
             nn.get_weights(cc.population["pop{0}".format(best_pol_id)])
             test_reward = 0.0
 
-            for seq in range(param["test_set_size"]):
+            for seq in range(p["test_set_size"]):
                 ag.reset_mem_block()
                 nn.clear_outputs()
                 seq_len = len(sc.test_set["set{0}".format(seq)])
@@ -111,7 +134,7 @@ def main():
                 elif nn.out_layer[0] >= 0.5 and sc.training_set_answers[seq, 2] == 1:
                     test_reward += 1
 
-            test_reward_history.append(test_reward/param["test_set_size"])
+            test_reward_history.append(test_reward/p["test_set_size"])
             training_reward_history.append(max(cc.fitness))
             cc.down_select()
 

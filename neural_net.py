@@ -40,6 +40,10 @@ class NeuralNetwork:
         self.encoder_weights = {}
 
     def clear_outputs(self):
+        """
+        Clears the various outputs of gates (sets them to 0)
+        :return:
+        """
         self.igate_outputs = np.mat(np.zeros(self.mem_block_size))
         self.wgate_outputs = np.mat(np.zeros(self.mem_block_size))
         self.rgate_outputs = np.mat(np.zeros(self.mem_block_size))
@@ -273,9 +277,6 @@ class NeuralNetwork:
         Run through NN for given rover
         :param mem_block:
         :param state_vec:
-        :param rover_input: Inputs from rover sensors
-        :param weight_vec:  Weights from CCEA
-        :param rover_id: Rover identifier
         :return: None
         """
         self.run_input_gate(state_vec, mem_block)
