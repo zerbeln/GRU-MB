@@ -1,11 +1,12 @@
 import numpy as np
 import random
 import copy
+from parameters import parameters
 
 
 class Ccea:
 
-    def __init__(self, parameters):
+    def __init__(self):
         self.population = {}
         self.pop_size = int(parameters["pop_size"])
         self.mut_rate = parameters["m_rate"]

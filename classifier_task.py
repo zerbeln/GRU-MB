@@ -2,11 +2,11 @@ import numpy as np
 import random
 import pickle
 import os
-
+from parameters import parameters as p
 
 class sequenceClassifier:
 
-    def __init__(self, p):
+    def __init__(self):
         self.depth = p["depth"]
         self.training_set_size = p["train_set_size"]
         self.test_set_size = p["test_set_size"]

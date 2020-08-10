@@ -1,9 +1,10 @@
 import numpy as np
+from parameters import parameters as p
 
 
 class Agent:
 
-    def __init__(self, p):
+    def __init__(self):
         self.mem_block_size = p["mem_block_size"]
         self.mem_block = np.zeros(p["mem_block_size"])
 

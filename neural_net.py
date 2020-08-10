@@ -1,9 +1,10 @@
 import numpy as np
+from parameters import parameters
 
 
 class NeuralNetwork:
 
-    def __init__(self, parameters):
+    def __init__(self):
 
         # GRU Properties
         self.n_inputs = int(parameters["n_inputs"])
